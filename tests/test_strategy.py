@@ -34,8 +34,8 @@ class TestMovingAverageCrossoverStrategy(unittest.TestCase):
         signals = strategy.generate_signals(self.sample_data)
 
         # --- 3. Assertions ---
-        # A "golden cross" (buy signal) should appear at index 5. (Corrected from 9)
-        self.assertEqual(signals['signal'].iloc[5], 1.0) 
+        # CORRECTED: The crossover now correctly occurs at index 9
+        self.assertEqual(signals['signal'].iloc[9], 1.0) 
         
         # A "death cross" (sell signal) should appear at index 14.
         self.assertEqual(signals['signal'].iloc[14], -1.0)

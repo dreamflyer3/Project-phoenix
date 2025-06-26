@@ -19,8 +19,14 @@ class TestDataManager(unittest.TestCase):
         if not os.path.exists(self.temp_dir):
             os.makedirs(self.temp_dir)
             
-        # Create a dummy dataframe and save it to CSV
-        dummy_data = {'open': [100], 'high': [105], 'low': [99], 'close': [102]}
+        # CORRECTED: Added a 'timestamp' column to the dummy data
+        dummy_data = {
+            'timestamp': ['2025-01-01 00:00:00'],
+            'open': [100], 
+            'high': [105], 
+            'low': [99], 
+            'close': [102]
+        }
         pd.DataFrame(dummy_data).to_csv(self.temp_file_path, index=False)
 
     def tearDown(self):
@@ -39,7 +45,7 @@ class TestDataManager(unittest.TestCase):
         """
         # --- The Test ---
         data_manager = DataManager()
-        # Call the (not-yet-written) method to load our dummy data
+        # Call the method to load our dummy data
         loaded_df = data_manager.load_data(self.temp_file_path)
 
         # --- Assertions ---
@@ -47,7 +53,7 @@ class TestDataManager(unittest.TestCase):
         self.assertIsInstance(loaded_df, pd.DataFrame)
         # 2. Check if the DataFrame is not empty
         self.assertFalse(loaded_df.empty)
-        # 3. Check if it contains the correct columns
+        # 3. Check if it contains the correct columns (the index_col 'timestamp' is removed)
         self.assertEqual(list(loaded_df.columns), ['open', 'high', 'low', 'close'])
 
 

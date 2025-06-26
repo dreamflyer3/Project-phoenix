@@ -33,16 +33,13 @@ class MovingAverageCrossoverStrategy:
         signals['signal'] = 0.0
 
         # Calculate the short and long moving averages
-        signals['short_ma'] = data['close'].rolling(window=self.short_window, min_periods=1).mean()
-        signals['long_ma'] = data['close'].rolling(window=self.long_window, min_periods=1).mean()
+        signals['short_ma'] = data['close'].rolling(window=self.short_window).mean()
+        signals['long_ma'] = data['close'].rolling(window=self.long_window).mean()
 
-        # Create a position: 1 if short > long, 0 otherwise.
-        # This creates a clear "state" for each day.
-        position = np.where(signals['short_ma'] > signals['long_ma'], 1.0, 0.0)
+        # Create the position state directly in the signals DataFrame to preserve the index
+        signals['position'] = np.where(signals['short_ma'] > signals['long_ma'], 1.0, 0.0)
         
-        # The signal is the change in state from the previous day.
-        # A change from 0 to 1 is a buy signal (1.0).
-        # A change from 1 to 0 is a sell signal (-1.0).
-        signals['signal'] = pd.Series(position).diff()
+        # The signal is the change in state from the previous day
+        signals['signal'] = signals['position'].diff()
 
         return signals

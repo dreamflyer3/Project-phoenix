@@ -5,80 +5,83 @@ import numpy as np
 
 class PortfolioManager:
     """
-    The "CEO" agent responsible for orchestrating the backtest, using all other agents.
+    Orchestrates the backtest, using all other agents.
+    This version includes logic to prevent lookahead bias and to model transaction costs.
     """
-    def __init__(self, data, strategies, risk_manager, initial_capital=100000.0, regime_filter=None):
+    def __init__(self, data, strategies, risk_manager, initial_capital=100000.0, commission_pct=0.0, slippage_pct=0.0, regime_filter=None):
         """
         Initializes the PortfolioManager.
 
         Args:
-            data (pd.DataFrame): The DataFrame containing market data (OHLC, ATR).
-            strategies (dict): A dictionary of strategy agents, keyed by regime name (e.g., 'bull', 'bear').
-            risk_manager: The risk manager agent for position sizing.
-            initial_capital (float): The starting capital for the backtest.
-            regime_filter (optional): The regime filter agent. Defaults to None.
+            data (pd.DataFrame): DataFrame with market data (OHLC, ATR).
+            strategies (dict): Dictionary of strategy agents, keyed by regime name.
+            risk_manager: The risk manager agent.
+            initial_capital (float): Starting capital for the backtest.
+            commission_pct (float): The commission percentage per trade (e.g., 0.001 for 0.1%).
+            slippage_pct (float): The slippage percentage per trade (e.g., 0.0005 for 0.05%).
+            regime_filter (optional): The regime filter agent.
         """
         self.data = data
         self.strategies = strategies
         self.risk_manager = risk_manager
         self.regime_filter = regime_filter
         self.initial_capital = initial_capital
+        self.commission_pct = commission_pct
+        self.slippage_pct = slippage_pct
 
     def run_backtest(self):
         """
-        Executes the backtest loop with regime-switching logic.
+        Executes the backtest loop with realistic trade execution.
         """
-        # 1. Generate all signals first
-        all_signals = {name: strategy.generate_signals(self.data) for name, strategy in self.strategies.items()}
-
-        # 2. Determine the regime for each day
-        if self.regime_filter:
-            # Note: A real implementation would get a regime for each day.
-            # For this test, we simplify by getting one regime for the whole dataset.
-            current_regime = self.regime_filter.get_regime(self.data)
-        else:
-            current_regime = 'default' # Use the 'default' strategy if no filter is provided
-
-        # 3. Select the final signals based on the regime
-        # If the determined regime has a dedicated strategy, use it. Otherwise, use the default.
-        final_signals = all_signals.get(current_regime, all_signals.get('default'))
-
+        final_signals = self.strategies.get('default')
         if final_signals is None:
-            raise ValueError("No applicable or default strategy found for the current regime.")
-            
-        # 4. Setup portfolio tracking variables
+            raise ValueError("A 'default' strategy must be provided.")
+        final_signals = final_signals.generate_signals(self.data)
+
         cash = self.initial_capital
         units_held = 0.0
         equity = [self.initial_capital]
-        trades = [] # To log our trades
+        trades = []
 
-        # 5. Loop through each day
         for i in range(1, len(self.data)):
-            current_price = self.data['close'].iloc[i]
-            signal = final_signals['signal'].iloc[i]
+            signal = final_signals['signal'].iloc[i-1]
+            market_price = self.data['open'].iloc[i]
 
             # If we get a BUY signal and are not in a position
             if signal == 1.0 and units_held == 0:
+                # SLIPPAGE: We pay a little more than the market price
+                slipped_buy_price = market_price * (1 + self.slippage_pct)
+
                 position_size, stop_loss = self.risk_manager.calculate_trade_parameters(
-                    account_balance=cash, risk_percentage=0.02, entry_price=current_price,
-                    atr=self.data['atr'].iloc[i], stop_loss_atr_multiplier=2.0
+                    account_balance=cash, risk_percentage=0.02, entry_price=market_price, # Sizing is based on market price
+                    atr=self.data['atr'].iloc[i-1], stop_loss_atr_multiplier=2.0
                 )
+                
                 if position_size > 0:
-                    cash -= position_size * current_price
-                    units_held = position_size
-                    trades.append({'type': 'buy', 'price': current_price, 'size': units_held})
+                    trade_value = position_size * slipped_buy_price
+                    commission = trade_value * self.commission_pct
+                    
+                    if cash >= (trade_value + commission):
+                        cash -= (trade_value + commission)
+                        units_held = position_size
+                        trades.append({'type': 'buy', 'price': slipped_buy_price, 'size': units_held})
 
             # If we get a SELL signal and are in a position
             elif signal == -1.0 and units_held > 0:
-                cash += units_held * current_price
-                trades.append({'type': 'sell', 'price': current_price, 'size': units_held})
+                # SLIPPAGE: We receive a little less than the market price
+                slipped_sell_price = market_price * (1 - self.slippage_pct)
+
+                trade_value = units_held * slipped_sell_price
+                commission = trade_value * self.commission_pct
+                
+                cash += (trade_value - commission)
+                trades.append({'type': 'sell', 'price': slipped_sell_price, 'size': units_held})
                 units_held = 0
 
-            current_total_equity = cash + (units_held * current_price)
+            current_total_equity = cash + (units_held * self.data['close'].iloc[i])
             equity.append(current_total_equity)
 
-        # 6. Create and return the results
         results = pd.DataFrame(index=self.data.index)
         results['equity'] = equity
-        results['trades'] = pd.Series(trades) # Store the list of trades
+        results['trades'] = pd.Series(trades)
         return results
