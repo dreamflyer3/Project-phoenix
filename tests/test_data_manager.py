@@ -6,6 +6,38 @@ import pandas as pd
 from src.data.data_manager import DataManager
 
 class TestDataManager(unittest.TestCase):
+    def test_clean_and_validate_data(self):
+        """
+        Tests if the DataManager can correctly clean a DataFrame with
+        gaps and anomalous data.
+        """
+        # --- 1. Create "Dirty" Data ---
+        # This data has a missing date (Jan 2nd) and a bad row (Jan 4th)
+        dirty_data = {
+            'timestamp': pd.to_datetime(['2025-01-01', '2025-01-03', '2025-01-04']),
+            'open': [100, 105, 115],
+            'high': [102, 108, 110], # Note: high is lower than low on Jan 4th
+            'low': [99, 104, 112],
+            'close': [101, 106, 108],
+        }
+        dirty_df = pd.DataFrame(dirty_data).set_index('timestamp')
+
+        # --- 2. The Test ---
+        data_manager = DataManager()
+        # Call the (not-yet-written) cleaning method
+        cleaned_df = data_manager.clean_and_validate_data(dirty_df)
+
+        # --- 3. Assertions ---
+        # a) Check that the anomalous row (Jan 4th) was dropped
+        self.assertEqual(len(cleaned_df), 3)
+        self.assertNotIn(pd.to_datetime('2025-01-04'), cleaned_df.index)
+
+        # b) Check that the missing date (Jan 2nd) was added
+        self.assertIn(pd.to_datetime('2025-01-02'), cleaned_df.index)
+
+        # c) Check that the values for the new date were forward-filled
+        # The values on Jan 2nd should match the values from Jan 1st
+        self.assertEqual(cleaned_df.loc['2025-01-02']['close'], 101)
 
     def setUp(self):
         """

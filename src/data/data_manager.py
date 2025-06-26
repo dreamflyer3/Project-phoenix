@@ -9,6 +9,39 @@ class DataManager:
     """
     An agent responsible for fetching, loading, and providing data.
     """
+    def clean_and_validate_data(self, df):
+        """
+        Cleans and validates the raw market data.
+        - Removes rows with impossible OHLC values.
+        - Fills gaps in the timeline using forward-fill.
+
+        Args:
+            df (pd.DataFrame): The raw DataFrame with a DatetimeIndex.
+
+        Returns:
+            A cleaned and validated pandas DataFrame.
+        """
+        # 1. Validate OHLC data: drop rows where low > high
+        invalid_rows = df[df['low'] > df['high']]
+        if not invalid_rows.empty:
+            print(f"Warning: Found and dropped {len(invalid_rows)} rows with impossible OHLC data.")
+            df = df.drop(invalid_rows.index)
+
+        # 2. Fill gaps in the timeline
+        # Create a complete daily date range from the first to the last day
+        full_date_range = pd.date_range(start=df.index.min(), end=df.index.max(), freq='D')
+        
+        # Reindex the dataframe to this full range. Missing dates will have NaN values.
+        df = df.reindex(full_date_range)
+        
+        # Use forward-fill to populate NaN values for missing days
+        df.ffill(inplace=True)
+        
+        # It's possible the very first rows are still NaN if the gap was at the start
+        df.dropna(inplace=True)
+
+        return df
+    
     def fetch_and_save_data(self, symbol, timeframe, start_date_str, data_dir='data'):
         """
         Fetches historical OHLCV data from Binance and saves it to a CSV file.
