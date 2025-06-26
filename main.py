@@ -10,6 +10,7 @@ from src.risk.risk_manager import RiskManager
 from src.strategies.ma_crossover_strategy import MovingAverageCrossoverStrategy
 from src.regime.regime_filter import RegimeFilter
 from src.portfolio.portfolio_manager import PortfolioManager
+from src.strategies.asymmetrical_ema_strategy import AsymmetricalEmaStrategy
 
 
 def plot_results(results):
@@ -42,7 +43,7 @@ def main():
 
     # For now, we only have one strategy, so we'll use it as the default
     strategies = {
-        'default': MovingAverageCrossoverStrategy(short_window=50, long_window=200)
+        'default': AsymmetricalEmaStrategy(short_ema=21, long_ema=55, regime_ma=200)
     }
 
     # We will not use the regime filter for this baseline run.
