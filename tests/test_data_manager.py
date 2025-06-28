@@ -78,7 +78,7 @@ class TestDataManager(unittest.TestCase):
         # --- The Test ---
         data_manager = DataManager()
         # Call the method to load our dummy data
-        loaded_df = data_manager.load_data(self.temp_file_path)
+        loaded_df = data_manager.load_data(self.temp_file_path, index_col='timestamp')
 
         # --- Assertions ---
         # 1. Check if the result is a pandas DataFrame
