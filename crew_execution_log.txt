@@ -1,0 +1,22 @@
+[36m+-[0m[36m-------------------------[0m[36m Crew Execution Started [0m[36m-------------------------[0m[36m-+[0m
+[36m|[0m                                                                            [36m|[0m
+[36m|[0m  [1;36mCrew Execution Started[0m                                                    [36m|[0m
+[36m|[0m  [37mName: [0m[36mcrew[0m                                                                [36m|[0m
+[36m|[0m  [37mID: [0m[36md05315ab-8679-446b-92c0-f29a0364a5fb[0m                                  [36m|[0m
+[36m|[0m  [37mTool Args: [0m                                                               [36m|[0m
+[36m|[0m                                                                            [36m|[0m
+[36m|[0m                                                                            [36m|[0m
+[36m+----------------------------------------------------------------------------+[0m
+
+[EventBus Error] Handler 'on_agent_logs_started' failed for event 'AgentLogsStartedEvent': 'charmap' codec can't encode character '\U0001f680' in position 7: character maps to <undefined>
+*** You may need to add PYTHONIOENCODING=utf-8 to your environment ***
+[EventBus Error] Handler 'on_llm_call_started' failed for event 'LLMCallStartedEvent': 'charmap' codec can't encode character '\U0001f680' in position 7: character maps to <undefined>
+*** You may need to add PYTHONIOENCODING=utf-8 to your environment ***
+[EventBus Error] Handler 'on_llm_call_completed' failed for event 'LLMCallCompletedEvent': 'charmap' codec can't encode character '\U0001f680' in position 7: character maps to <undefined>
+*** You may need to add PYTHONIOENCODING=utf-8 to your environment ***
+[EventBus Error] Handler 'on_agent_logs_execution' failed for event 'AgentLogsExecutionEvent': 'charmap' codec can't encode character '\U0001f680' in position 7: character maps to <undefined>
+*** You may need to add PYTHONIOENCODING=utf-8 to your environment ***
+[EventBus Error] Handler 'on_task_completed' failed for event 'TaskCompletedEvent': 'charmap' codec can't encode character '\U0001f680' in position 7: character maps to <undefined>
+*** You may need to add PYTHONIOENCODING=utf-8 to your environment ***
+[EventBus Error] Handler 'on_crew_completed' failed for event 'CrewKickoffCompletedEvent': 'charmap' codec can't encode character '\U0001f680' in position 7: character maps to <undefined>
+*** You may need to add PYTHONIOENCODING=utf-8 to your environment ***
